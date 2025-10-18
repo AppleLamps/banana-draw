@@ -27,6 +27,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, err
         fileInputRef.current?.click();
     };
 
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            handleClick();
+        }
+    };
+
     const handleDrag = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -63,7 +69,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, err
                 className="hidden"
             />
             <div
+                role="button"
+                tabIndex={0}
                 onClick={handleClick}
+                onKeyDown={handleKeyDown}
                 onDragEnter={handleDragIn}
                 onDragLeave={handleDragOut}
                 onDragOver={handleDrag}
