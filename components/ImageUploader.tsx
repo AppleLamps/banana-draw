@@ -6,10 +6,6 @@ interface ImageUploaderProps {
     error: string | null;
 }
 
-// Maximum file size: 10MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
-
 const UploadIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
@@ -20,32 +16,15 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, err
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
 
-    const validateAndUpload = (file: File): boolean => {
-        if (!ALLOWED_TYPES.includes(file.type)) {
-            return false;
-        }
-        if (file.size > MAX_FILE_SIZE) {
-            return false;
-        }
-        onImageUpload(file);
-        return true;
-    };
-
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            validateAndUpload(file);
+            onImageUpload(file);
         }
     };
 
     const handleClick = () => {
         fileInputRef.current?.click();
-    };
-
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            handleClick();
-        }
     };
 
     const handleDrag = useCallback((e: React.DragEvent) => {
@@ -69,10 +48,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, err
         handleDrag(e);
         setIsDragging(false);
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            validateAndUpload(e.dataTransfer.files[0]);
+            onImageUpload(e.dataTransfer.files[0]);
             e.dataTransfer.clearData();
         }
-    }, [handleDrag]);
+    }, [handleDrag, onImageUpload]);
 
     return (
         <div className="w-full max-w-xl flex flex-col items-center">
@@ -84,10 +63,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, err
                 className="hidden"
             />
             <div
-                role="button"
-                tabIndex={0}
                 onClick={handleClick}
-                onKeyDown={handleKeyDown}
                 onDragEnter={handleDragIn}
                 onDragLeave={handleDragOut}
                 onDragOver={handleDrag}
