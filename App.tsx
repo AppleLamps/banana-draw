@@ -29,8 +29,8 @@ const ToggleSwitch: React.FC<{
   return (
     <div className="relative flex w-40 items-center rounded-full bg-slate-200/70 p-1 shadow-inner backdrop-blur-sm">
       <div className={`absolute h-8 w-[calc(50%-4px)] rounded-full bg-sky-500 shadow-md transition-transform duration-300 ease-in-out ${isSketch ? 'translate-x-0.5' : 'translate-x-[calc(100%-1px)]'}`}></div>
-      <button onClick={() => onChange('sketch')} className={`relative z-10 flex-1 py-1 text-sm font-semibold transition-colors duration-300 ${isSketch ? 'text-white' : 'text-slate-600'}`}>Sketch</button>
-      <button onClick={() => onChange('sideBySide')} className={`relative z-10 flex-1 py-1 text-sm font-semibold transition-colors duration-300 ${!isSketch ? 'text-white' : 'text-slate-600'}`}>Compare</button>
+      <button onClick={() => onChange('sketch')} className={`relative z-10 flex-1 py-1 text-sm font-semibold transition-colors duration-300 ${isSketch ? 'text-white' : 'text-slate-600'}`} aria-pressed={isSketch}>Sketch</button>
+      <button onClick={() => onChange('sideBySide')} className={`relative z-10 flex-1 py-1 text-sm font-semibold transition-colors duration-300 ${!isSketch ? 'text-white' : 'text-slate-600'}`} aria-pressed={!isSketch}>Compare</button>
     </div>
   );
 };
@@ -43,6 +43,7 @@ const App: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('sketch');
     const [fileName, setFileName] = useState<string>('sketch.png');
+    const [loadingMessage, setLoadingMessage] = useState<string>('Warming up the virtual pencils...');
 
     const handleImageUpload = useCallback(async (file: File) => {
         setIsLoading(true);
@@ -53,16 +54,17 @@ const App: React.FC = () => {
         setFileName(`${originalFileName}-sketch.png`);
 
         try {
+            setLoadingMessage('Preparing your image...');
             const dataUrl = await fileToBase64(file);
             setOriginalImage(dataUrl);
 
+            setLoadingMessage('Sketching your masterpiece...');
             const base64Data = dataUrl.split(',')[1];
             const sketchDataUrl = await generateSketch(base64Data, file.type);
             setSketchedImage(sketchDataUrl);
         } catch (err) {
             console.error(err);
             setError('Failed to generate sketch. Please try another image.');
-            setOriginalImage(null);
         } finally {
             setIsLoading(false);
         }
@@ -87,21 +89,38 @@ const App: React.FC = () => {
     }, [sketchedImage, fileName]);
 
     const renderContent = () => {
-        if (isLoading) {
-            return <LoadingSpinner />;
+        if (isLoading && !originalImage) {
+            return <LoadingSpinner message={loadingMessage} />;
         }
-        if (sketchedImage && originalImage) {
+
+        if (originalImage) {
             return (
                 <>
-                    <ImageDisplay originalImage={originalImage} sketchedImage={sketchedImage} viewMode={viewMode} />
+                    <ImageDisplay
+                        originalImage={originalImage}
+                        sketchedImage={sketchedImage}
+                        viewMode={viewMode}
+                        isLoading={isLoading}
+                        error={error}
+                        loadingMessage={loadingMessage}
+                    />
                     <div className="w-full max-w-lg mx-auto mt-8 flex flex-col sm:flex-row justify-between items-center gap-4 px-4">
                         <ToggleSwitch value={viewMode} onChange={setViewMode} />
                         <div className="flex items-center gap-4">
-                            <button onClick={handleDownload} className="flex items-center gap-2 bg-sky-500 text-white font-semibold px-4 py-2 rounded-full shadow-lg hover:bg-sky-600 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                            <button
+                                onClick={handleDownload}
+                                className="flex items-center gap-2 bg-sky-500 text-white font-semibold px-4 py-2 rounded-full shadow-lg hover:bg-sky-600 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                                disabled={!sketchedImage || isLoading}
+                                aria-label="Download sketch"
+                            >
                                 <DownloadIcon className="w-5 h-5" />
                                 <span>Download</span>
                             </button>
-                            <button onClick={handleReset} className="flex items-center gap-2 bg-white text-slate-700 font-semibold px-4 py-2 rounded-full shadow-md hover:bg-slate-100 border border-slate-200 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400">
+                            <button
+                                onClick={handleReset}
+                                className="flex items-center gap-2 bg-white text-slate-700 font-semibold px-4 py-2 rounded-full shadow-md hover:bg-slate-100 border border-slate-200 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400"
+                                aria-label="Upload new photo"
+                            >
                                 <NewPhotoIcon className="w-5 h-5" />
                                 New
                             </button>
@@ -110,6 +129,7 @@ const App: React.FC = () => {
                 </>
             );
         }
+
         return <ImageUploader onImageUpload={handleImageUpload} error={error} />;
     };
 

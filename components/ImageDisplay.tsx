@@ -5,8 +5,11 @@ type ViewMode = 'sketch' | 'sideBySide';
 
 interface ImageDisplayProps {
     originalImage: string;
-    sketchedImage: string;
+    sketchedImage: string | null;
     viewMode: ViewMode;
+    isLoading: boolean;
+    error: string | null;
+    loadingMessage: string;
 }
 
 const ImageCard: React.FC<{ src: string; title: string; isVisible: boolean }> = ({ src, title, isVisible }) => (
@@ -22,7 +25,7 @@ const ImageCard: React.FC<{ src: string; title: string; isVisible: boolean }> = 
     </div>
 );
 
-export const ImageDisplay: React.FC<ImageDisplayProps> = ({ originalImage, sketchedImage, viewMode }) => {
+export const ImageDisplay: React.FC<ImageDisplayProps> = ({ originalImage, sketchedImage, viewMode, isLoading, error, loadingMessage }) => {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -32,14 +35,37 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ originalImage, sketc
     
     const isSideBySide = viewMode === 'sideBySide';
 
+    const renderSketchPanel = () => {
+        if (isLoading) {
+            return <LoadingSpinner message={loadingMessage} />;
+        }
+        if (error) {
+            return (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-red-50 rounded-xl p-4">
+                     <div className="text-red-500 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <p className="text-red-700 font-semibold text-center">Oops! Something went wrong.</p>
+                    <p className="text-red-600 text-sm text-center mt-1">{error}</p>
+                </div>
+            )
+        }
+        if (sketchedImage) {
+            return <ImageCard src={sketchedImage} title="Sketch" isVisible={true} />;
+        }
+        return null;
+    }
+
     return (
         <div className={`w-full max-w-6xl p-2 bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl transition-all duration-700 ease-in-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <div className={`flex flex-col md:flex-row gap-2 transition-all duration-500 ease-in-out aspect-[1/1] md:aspect-[2/1]`}>
+            <div className={`flex flex-col md:flex-row gap-2 transition-all duration-500 ease-in-out aspect-square md:aspect-[2/1]`}>
                 <div className={`transition-all duration-700 ease-in-out overflow-hidden ${isSideBySide ? 'w-full md:w-1/2 opacity-100' : 'w-full md:w-0 opacity-0'}`}>
                     <ImageCard src={originalImage} title="Original" isVisible={isSideBySide} />
                 </div>
-                <div className={`transition-all duration-700 ease-in-out ${isSideBySide ? 'w-full md:w-1/2' : 'w-full'}`}>
-                    <ImageCard src={sketchedImage} title="Sketch" isVisible={true} />
+                <div className={`transition-all duration-700 ease-in-out bg-slate-100/50 rounded-xl ${isSideBySide ? 'w-full md:w-1/2' : 'w-full'}`}>
+                   {renderSketchPanel()}
                 </div>
             </div>
         </div>
