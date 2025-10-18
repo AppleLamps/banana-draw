@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { LoadingSpinner } from './LoadingSpinner';
 
 type ViewMode = 'sketch' | 'sideBySide';
 

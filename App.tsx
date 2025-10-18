@@ -27,7 +27,7 @@ const ToggleSwitch: React.FC<{
 }> = ({ value, onChange }) => {
   const isSketch = value === 'sketch';
   return (
-    <div className="relative flex w-40 items-center rounded-full bg-slate-200/70 p-1 shadow-inner backdrop-blur-sm">
+    <div className="relative flex w-40 items-center rounded-full bg-slate-200/70 p-1 shadow-inner backdrop-blur-sm" role="group" aria-label="View mode toggle">
       <div className={`absolute h-8 w-[calc(50%-4px)] rounded-full bg-sky-500 shadow-md transition-transform duration-300 ease-in-out ${isSketch ? 'translate-x-0.5' : 'translate-x-[calc(100%-1px)]'}`}></div>
       <button onClick={() => onChange('sketch')} className={`relative z-10 flex-1 py-1 text-sm font-semibold transition-colors duration-300 ${isSketch ? 'text-white' : 'text-slate-600'}`} aria-pressed={isSketch}>Sketch</button>
       <button onClick={() => onChange('sideBySide')} className={`relative z-10 flex-1 py-1 text-sm font-semibold transition-colors duration-300 ${!isSketch ? 'text-white' : 'text-slate-600'}`} aria-pressed={!isSketch}>Compare</button>
