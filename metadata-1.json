@@ -1,0 +1,5 @@
+{
+  "name": "AI Photo Sketcher",
+  "description": "Upload any photo to instantly transform it into a hand-drawn sketch using Gemini. Features side-by-side preview and high-quality downloads.",
+  "requestFramePermissions": []
+}
