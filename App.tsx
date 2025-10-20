@@ -4,7 +4,7 @@ import { Header } from './components/Header';
 import { ImageUploader } from './components/ImageUploader';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ImageDisplay } from './components/ImageDisplay';
-import { generateSketch } from './services/geminiService';
+import { generateSketch, DetailLevel } from './services/geminiService';
 import { fileToBase64 } from './utils/fileUtils';
 
 type ViewMode = 'sketch' | 'sideBySide';
@@ -35,6 +35,32 @@ const ToggleSwitch: React.FC<{
   );
 };
 
+const DetailSelector: React.FC<{
+  value: DetailLevel;
+  onChange: (value: DetailLevel) => void;
+}> = ({ value, onChange }) => {
+  const getTransformClass = () => {
+    switch (value) {
+      case 'low': return 'translate-x-0';
+      case 'medium': return 'translate-x-full';
+      case 'high': return 'translate-x-[200%]';
+      default: return '';
+    }
+  };
+  
+  return (
+    <div className="mb-8 flex flex-col items-center" >
+      <label className="text-sm font-medium text-slate-600 mb-2" id="detail-level-label">Select Detail Level</label>
+      <div className="relative flex w-72 items-center rounded-full bg-slate-200/70 p-1 shadow-inner" role="group" aria-labelledby="detail-level-label">
+        <div className={`absolute h-8 w-1/3 rounded-full bg-sky-500 shadow-md transition-transform duration-300 ease-in-out ${getTransformClass()}`}></div>
+        <button onClick={() => onChange('low')} className={`relative z-10 flex-1 py-1 text-sm font-semibold transition-colors duration-300 ${value === 'low' ? 'text-white' : 'text-slate-600'}`} aria-pressed={value === 'low'}>Low</button>
+        <button onClick={() => onChange('medium')} className={`relative z-10 flex-1 py-1 text-sm font-semibold transition-colors duration-300 ${value === 'medium' ? 'text-white' : 'text-slate-600'}`} aria-pressed={value === 'medium'}>Medium</button>
+        <button onClick={() => onChange('high')} className={`relative z-10 flex-1 py-1 text-sm font-semibold transition-colors duration-300 ${value === 'high' ? 'text-white' : 'text-slate-600'}`} aria-pressed={value === 'high'}>High</button>
+      </div>
+    </div>
+  );
+};
+
 
 const App: React.FC = () => {
     const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -45,6 +71,7 @@ const App: React.FC = () => {
     const [fileName, setFileName] = useState<string>('sketch.png');
     const [loadingMessage, setLoadingMessage] = useState<string>('Warming up the virtual pencils...');
     const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null);
+    const [detailLevel, setDetailLevel] = useState<DetailLevel>('medium');
 
     const handleImageUpload = useCallback(async (file: File) => {
         setIsLoading(true);
@@ -73,7 +100,7 @@ const App: React.FC = () => {
 
             setLoadingMessage('Sketching your masterpiece...');
             const base64Data = dataUrl.split(',')[1];
-            const sketchDataUrl = await generateSketch(base64Data, file.type);
+            const sketchDataUrl = await generateSketch(base64Data, file.type, detailLevel);
             setSketchedImage(sketchDataUrl);
         } catch (err) {
             console.error(err);
@@ -81,7 +108,7 @@ const App: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [detailLevel]);
 
     const handleReset = useCallback(() => {
         setOriginalImage(null);
@@ -145,7 +172,12 @@ const App: React.FC = () => {
             );
         }
 
-        return <ImageUploader onImageUpload={handleImageUpload} error={error} />;
+        return (
+            <div className="w-full max-w-xl flex flex-col items-center">
+                <DetailSelector value={detailLevel} onChange={setDetailLevel} />
+                <ImageUploader onImageUpload={handleImageUpload} error={error} />
+            </div>
+        );
     };
 
     return (

@@ -9,14 +9,25 @@ if (!API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
+export type DetailLevel = 'low' | 'medium' | 'high';
+
+const prompts: Record<DetailLevel, string> = {
+  low: 'Transform this photo into a simple, minimalist line drawing. Focus only on the main outlines and contours with almost no shading. The background must be a clean white.',
+  medium: 'Transform this photo into an elegant, hand-drawn pencil sketch. Focus on clean lines, subtle shading, and artistic expression, while preserving the key features of the original image. The background should be a clean white.',
+  high: 'Transform this photo into a highly detailed, photorealistic pencil sketch. Emphasize fine details, intricate textures, and realistic shading to create a rich, lifelike drawing. The background must be a clean white.',
+};
+
 /**
  * Generates a sketch from a given image using the Gemini API.
  * @param base64ImageData The base64-encoded image data (without the data URL prefix).
  * @param mimeType The MIME type of the image (e.g., 'image/jpeg').
+ * @param detailLevel The desired level of detail for the sketch.
  * @returns A promise that resolves to the base64 data URL of the generated sketch.
  */
-export const generateSketch = async (base64ImageData: string, mimeType: string): Promise<string> => {
+export const generateSketch = async (base64ImageData: string, mimeType: string, detailLevel: DetailLevel): Promise<string> => {
   try {
+    const promptText = prompts[detailLevel];
+    
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -28,7 +39,7 @@ export const generateSketch = async (base64ImageData: string, mimeType: string):
             },
           },
           {
-            text: 'Transform this photo into an elegant, hand-drawn pencil sketch. Focus on clean lines, subtle shading, and artistic expression, while preserving the key features of the original image. The background should be a clean white.',
+            text: promptText,
           },
         ],
       },
